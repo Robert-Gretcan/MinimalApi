@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  productapi:
+    build: .
+    ports:
+      - "8080:8080"
+  
+  locust:
+    build: ./locust
+    ports:
+      - "8089:8089"
+    depends_on:
+      - productapi
