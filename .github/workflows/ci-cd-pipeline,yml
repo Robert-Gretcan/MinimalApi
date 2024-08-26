@@ -1,0 +1,54 @@
+name: Test inside pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build the application using Docker
+      run: |
+        docker run --rm -v ${GITHUB_WORKSPACE}:/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 \
+        dotnet publish -c Release -o out
+
+    - name: Build the Docker image
+      run: |
+        docker build -t product-api .
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build the application using Docker
+      run: |
+        docker run --rm -v ${GITHUB_WORKSPACE}:/app -w /app mcr.microsoft.com/dotnet/sdk:8.0 \
+        dotnet publish -c Release -o out
+
+    - name: Build and Run the API container
+      run: |
+        docker build -t product-api .
+        docker run -d --name productapi -p 8080:80 product-api
+
+    - name: Install Python and Locust
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip
+        pip3 install locust
+
+    - name: Run Locust Load Tests
+      run: |
+        locust -f locust/locustfile.py --headless -u 10 -r 1 --run-time 1m --host http://localhost:8080
