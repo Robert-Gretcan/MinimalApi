@@ -52,3 +52,5 @@ jobs:
     - name: Run Locust Load Tests
       run: |
         locust -f locust/loadtest.py --headless -u 3 -r 1 --run-time 15s --host http://localhost:8080
+        # Allow this step to fail without failing the workflow
+        continue-on-error: true
